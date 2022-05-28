@@ -6,7 +6,10 @@ Track Amazon products from my watchlist and notify via discord when target price
 
 ```
 pip install pipenv
-pipenv shell 
+pipenv install 
 ```
 
-
+### Deactivate env - Do not use deactivate 
+```
+exit
+```

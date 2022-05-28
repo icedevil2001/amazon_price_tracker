@@ -1,8 +1,8 @@
 from time import sleep
 from discord_webhook import DiscordWebhook, DiscordEmbed
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 import os
-load_dotenv()
+# load_dotenv()
 
 hook = os.getenv("HOOK")
 def send_msg(title: str, description: str, url=None):
