@@ -1,32 +1,19 @@
+from email.policy import default
 import click 
-from price_tracker.tracker import AmazonPrice 
+from price_tracker.tracker import AmazonPrice, BASE_URL
 from requests_html import HTMLSession, HTMLResponse
+from price_tracker.discordhook import send_msg
+from time import sleep
+import schedule
+from price_tracker.database import (
+    WatchList, 
+    WatchListTable, 
+    db, TrackerTable, 
+    PriceTable
+)
 
 
-@click.group()
-def cli():
-    pass
-
-@cli.command()
-@click.argument('asin')
-@click.argument('price')
-@click.option('--update','-u', is_flag=True, help='Update price target')
-@click.option('--add', '-a', is_flag=True, help='Add to target price target')
-@click.option('--delete', '-d', is_flag=True, help='Delete price target')
-def Watch_list(asin, price,update, add, delete):
-    """Watch list"""
-    watch = WatchList(asin, price)
-    if update:
-        watch.update_price()
-    if add:
-        watch.add()
-    if delete:
-        watch.delete()
-
-
-@cli.command()
-@click.option('--hour')
-def run_watcher(hour= None):
+def amazon_price_scraper():
 
     session = HTMLSession()
     items = db.query(WatchListTable).all()
@@ -38,10 +25,8 @@ def run_watcher(hour= None):
         if r.status_code != 200:
             print(f'ERROR {r.status_code}')
             continue
-        # r.html.render()
         sleep(1)
         am = AmazonPrice(r.html, amz_url) 
-        # print(am.price_info_dict())
         am.add()
         if am.target_price(watch.targetprice):
             send_msg(
@@ -50,6 +35,69 @@ def run_watcher(hour= None):
                 url = am.url
             )
 
+@click.group()
+def cli():
+    pass
+
+@cli.command()
+@click.argument('asin')
+@click.argument('price')
+@click.option('--update','-u', is_flag=True, help='Update price target')
+@click.option('--add', '-a', is_flag=True, help='Add to target price target')
+@click.option('--delete', '-d', is_flag=True, help='Delete price target')
+@click.option('--show', '-s', is_flag=True, help='List db')
+def watch_list(asin, price,update, add, delete, show):
+    """Watch list"""
+    watch = WatchList(asin, price)
+    if update:
+        watch.update_price()
+    if add:
+        watch.add()
+    if delete:
+        watch.delete()
+    if show:
+        # results = db.query(WatchListTable).all()
+        # print()
+        # print('='* 20)
+        results  = (
+            db
+            .query(TrackerTable)
+            .join(WatchListTable)
+            .filter(TrackerTable.asin == WatchListTable.asin)  
+            # .all()      
+        )
+        # # print('***', results)
+        for rec in results:
+            # print(dir(rec))
+            # title =  rec.tracker.title
+            # print(f'Title:\t{title}')
+            for k,v in rec.__dict__.items():
+                if "_sa_instance_state" == k: continue
+                
+                print(f'{k}:\t{v}')
+            print('='* 20)  
+
+
+@cli.command()
+@click.option('--interval', '-i', type=int, default=1, help = 'How offten to run the scrape. default: [1]')
+@click.option('--unit', '-u', default='days', 
+    type=click.Choice(['minutes', 'hours', 'days', 'weeks'], case_sensitive=False),
+    help = 'Unit of time, select from [minutes, hours, days, weeks]: default: [days]')
+def run_watcher(unit: str, interval: int ):
+    if not unit in ['minutes', 'hours', 'days', 'weeks']:
+        raise ValueError(f'{unit} is not a valid chiichSelect')
+    click.echo(f'Settings: {unit} every {interval} ')
+    unit = unit.lower()
+    sched = getattr(schedule.every(interval), unit, ) 
+    # sched = schedule.every(time).__setattr__(unit, None)
+    schedule.do(amazon_price_scraper)
+    print((sched.__dict__))
+    while True:
+        # schedule.run_pending()
+        print('>>')
+        schedule.run_pending()
+        sleep(1) ## this allow you kill the job 
+        # break
 
 if __name__ == "__main__":
     cli()

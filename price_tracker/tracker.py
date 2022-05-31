@@ -5,15 +5,16 @@ from time import sleep
 from requests_html import HTMLSession, HTMLResponse
 from datetime import datetime as dt
 # from bs4 import BeautifulSoup as bs
-from pprint import pprint
-from database import (
-    WatchListTable, 
+# from pprint import pprint
+from price_tracker.database import (
+    # WatchListTable, 
     db, TrackerTable, 
-    PriceTable, WatchList
+    PriceTable, 
+    # WatchList
 )
-import click 
+# import click 
 import logging
-from discordhook import send_msg
+# from discordhook import send_msg
 
 logger = logging.getLogger(__name__) 
 

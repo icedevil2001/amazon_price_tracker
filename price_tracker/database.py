@@ -7,10 +7,13 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship, sessionmaker
 from typing import List
+from pathlib  import Path
 
 Base = declarative_base()
+ROOTDIR = Path(__file__).parents[1].resolve()
+DBPATH = str(ROOTDIR / "database"/ "amazon.db")
 
-engine = create_engine("sqlite:///database/amazon.db", echo=True)
+engine = create_engine(f"sqlite:////{DBPATH}", echo=False)
 
 class WatchListTable(Base):
     __tablename__ = "watchlist"
@@ -18,19 +21,21 @@ class WatchListTable(Base):
     asin = Column(String, primary_key = True )
     targetprice = Column(Float)
 
-
 class TrackerTable(Base):
     """Parent Table, One to Many"""
     __tablename__ = "trackers"
 
     asin = Column(String, primary_key =True)
     title = Column(String)
+    url = Column(String)
     pricetables = relationship(
         "PriceTable", 
         backref = 'tracker',
         # back_populates='trackers',
         cascade="all, delete, delete-orphan"
         )
+    # def __repr__(self) -> str:
+    #     return super().__repr__()
 
 class PriceTable(Base):
     """Child table One to Many"""
@@ -68,13 +73,10 @@ class WatchList:
     
     def delete(self):
         """Delete record"""
-        db.query().delete()
+        self.query().delete()
 
     def update_price(self, price):
         """Update price target"""
         self.query().update({'targetprice': price})
         db.commit()
 
-
-    
-    
