@@ -56,9 +56,6 @@ def watch_list(asin, price,update, add, delete, show):
     if delete:
         watch.delete()
     if show:
-        # results = db.query(WatchListTable).all()
-        # print()
-        # print('='* 20)
         results  = (
             db
             .query(TrackerTable)
@@ -66,7 +63,7 @@ def watch_list(asin, price,update, add, delete, show):
             .filter(TrackerTable.asin == WatchListTable.asin)  
             # .all()      
         )
-        # # print('***', results)
+
         for rec in results:
             # print(dir(rec))
             # title =  rec.tracker.title
@@ -79,25 +76,24 @@ def watch_list(asin, price,update, add, delete, show):
 
 
 @cli.command()
-@click.option('--interval', '-i', type=int, default=1, help = 'How offten to run the scrape. default: [1]')
-@click.option('--unit', '-u', default='days', 
-    type=click.Choice(['minutes', 'hours', 'days', 'weeks'], case_sensitive=False),
-    help = 'Unit of time, select from [minutes, hours, days, weeks]: default: [days]')
-def run_watcher(unit: str, interval: int ):
-    if not unit in ['minutes', 'hours', 'days', 'weeks']:
-        raise ValueError(f'{unit} is not a valid chiichSelect')
-    click.echo(f'Settings: {unit} every {interval} ')
-    unit = unit.lower()
-    sched = getattr(schedule.every(interval), unit, ) 
-    # sched = schedule.every(time).__setattr__(unit, None)
-    schedule.do(amazon_price_scraper)
-    print((sched.__dict__))
+@click.option('--interval', '-i', type=int, default=12, help = 'How offten to run the scraper - hourly. default: [1]')
+# @click.option('--unit', '-u', default='days', 
+#     type=click.Choice(['minutes', 'hours', 'days', 'weeks'], case_sensitive=False),
+#     help = 'Unit of time, select from [minutes, hours, days, weeks]: default: [days]')
+def run_watcher(interval: int ):
+    # if not unit in ['minutes', 'hours', 'days', 'weeks']:
+    #     raise ValueError(f'{unit} is not a valid chiichSelect')
+    # click.echo(f'Settings: {unit} every {interval} ')
+    # unit = unit.lower()
+
+    schedule.every(interval).minutes.do(amazon_price_scraper)
+    # print(schedule.get_jobs())
+    print(schedule.get_jobs())
     while True:
-        # schedule.run_pending()
-        print('>>')
+        sleep(10)
         schedule.run_pending()
-        sleep(1) ## this allow you kill the job 
-        # break
+        
+
 
 if __name__ == "__main__":
     cli()
