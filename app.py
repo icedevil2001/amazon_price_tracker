@@ -1,4 +1,4 @@
-from email.policy import default
+
 import click 
 from price_tracker.tracker import AmazonPrice, BASE_URL
 from requests_html import HTMLSession, HTMLResponse
