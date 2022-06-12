@@ -1,15 +1,17 @@
 
+from unittest import result
 import click 
 from price_tracker.tracker import AmazonPrice, BASE_URL
 from requests_html import HTMLSession, HTMLResponse
 from price_tracker.discordhook import send_msg
 from time import sleep
 import schedule
+import pandas as pd
 from price_tracker.database import (
     WatchList, 
     WatchListTable, 
     db, TrackerTable, 
-    PriceTable
+    PriceTable, engine
 )
 
 
@@ -39,7 +41,7 @@ def amazon_price_scraper():
 def cli():
     pass
 
-@cli.command()
+@cli.command('watchlist')
 @click.argument('asin')
 @click.argument('price')
 @click.option('--update','-u', is_flag=True, help='Update price target')
@@ -65,9 +67,6 @@ def watch_list(asin, price,update, add, delete, show):
         )
 
         for rec in results:
-            # print(dir(rec))
-            # title =  rec.tracker.title
-            # print(f'Title:\t{title}')
             for k,v in rec.__dict__.items():
                 if "_sa_instance_state" == k: continue
                 
@@ -77,15 +76,7 @@ def watch_list(asin, price,update, add, delete, show):
 
 @cli.command()
 @click.option('--interval', '-i', type=int, default=12, help = 'How offten to run the scraper - hourly. default: [1]')
-# @click.option('--unit', '-u', default='days', 
-#     type=click.Choice(['minutes', 'hours', 'days', 'weeks'], case_sensitive=False),
-#     help = 'Unit of time, select from [minutes, hours, days, weeks]: default: [days]')
 def run_watcher(interval: int ):
-    # if not unit in ['minutes', 'hours', 'days', 'weeks']:
-    #     raise ValueError(f'{unit} is not a valid chiichSelect')
-    # click.echo(f'Settings: {unit} every {interval} ')
-    # unit = unit.lower()
-
     schedule.every(interval).minutes.do(amazon_price_scraper)
     # print(schedule.get_jobs())
     print(schedule.get_jobs())
@@ -93,6 +84,28 @@ def run_watcher(interval: int ):
         sleep(10)
         schedule.run_pending()
         
+
+@cli.command('showtable')
+@click.option('--export', '-e', is_flag=True, help='export to csv')
+def showtable(export: bool):
+    # results = (
+    #     db
+    #     .query(WatchListTable, TrackerTable, PriceTable)
+    #     .filter(WatchListTable.asin == TrackerTable.asin)
+    #     .filter( TrackerTable.asin == PriceTable.asin_id)
+    #     .all()
+
+    # )
+    # watch = pd.read_sql_table('watchlist', con=db)
+    watch = pd.read_sql_table("watchlist", con=engine)
+    tracker = pd.read_sql_table('trackers', con=engine)
+    # prices = pd.read_sql('prices', con=engine)
+    # print(prices)
+    df = pd.merge(watch, tracker, on =["asin"])
+    print(df)
+    # print(dir(results[0][0]))
+    # print(results[0][0].__repr__)
+
 
 
 if __name__ == "__main__":

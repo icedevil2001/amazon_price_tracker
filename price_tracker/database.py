@@ -21,6 +21,7 @@ class WatchListTable(Base):
     asin = Column(String, primary_key = True )
     targetprice = Column(Float)
 
+    
 class TrackerTable(Base):
     """Parent Table, One to Many"""
     __tablename__ = "trackers"
@@ -35,7 +36,7 @@ class TrackerTable(Base):
         cascade="all, delete, delete-orphan"
         )
     # def __repr__(self) -> str:
-    #     return super().__repr__()
+    #     return self.__dict__
 
 class PriceTable(Base):
     """Child table One to Many"""
@@ -44,11 +45,8 @@ class PriceTable(Base):
     id = Column(Integer, primary_key = True)
     datetime = Column(DateTime)
     price  = Column(Float)
-
-    asin_id = Column(Integer, ForeignKey('trackers.asin'))
+    asin_id = Column(String, ForeignKey('trackers.asin'))
   
- 
-
 Base.metadata.create_all(engine)
 LocalSession = sessionmaker(bind=engine)
 db: Session = LocalSession()

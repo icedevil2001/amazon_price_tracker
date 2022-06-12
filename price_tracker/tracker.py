@@ -30,7 +30,8 @@ class AmazonPrice:
         self.html =  html
         self.url = amazon_url
         self.dt = dt.now()
-        self.html.render()
+        # self.html.render()
+        self._render()
 
     @property
     def price(self):
@@ -44,6 +45,17 @@ class AmazonPrice:
     def asin(self):
         result = self.html.xpath('//*[@id="deliveryBlockSelectAsin"]',first=True)
         return result.attrs['value']
+
+    def _render(self):
+        for i in range(10):
+            try:
+                self.html.render()
+                break_loop = True 
+            except:
+                break_loop = False 
+            sleep(10)
+            if break_loop:
+                break 
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}(\ntitle = {self.title}\nprice = {self.price}\n)'
@@ -90,69 +102,3 @@ class AmazonPrice:
         self._query().update({'targetprice': price})
         db.commit()
     
-
-
-# @click.group()
-# def cli():
-#     pass
-
-# @cli.command()
-# @click.argument('asin')
-# @click.argument('price')
-# @click.option('--update','-u', is_flag=True, help='Update price target')
-# @click.option('--add', '-a', is_flag=True, help='Add to target price target')
-# @click.option('--delete', '-d', is_flag=True, help='Delete price target')
-# def Watch_list(asin, price,update, add, delete):
-#     """Watch list"""
-#     watch = WatchList(asin, price)
-#     if update:
-#         watch.update_price()
-#     if add:
-#         watch.add()
-#     if delete:
-#         watch.delete()
-
-
-# @cli.command()
-# @click.option('--hour')
-# def run_watcher(hour= None):
-
-#     session = HTMLSession()
-#     items = db.query(WatchListTable).all()
-#     if len(items) ==0:
-#         raise ValueError('Please add the watch list first')
-#     for watch in items:
-#         amz_url = (BASE_URL.format(watch.asin))
-#         r = session.get(amz_url)
-#         if r.status_code != 200:
-#             print(f'ERROR {r.status_code}')
-#             continue
-#         # r.html.render()
-#         sleep(1)
-#         am = AmazonPrice(r.html, amz_url) 
-#         # print(am.price_info_dict())
-#         am.add()
-#         if am.target_price(watch.targetprice):
-#             send_msg(
-#                 title = 'Price below target',
-#                 description = f'{am.title}\n\n**Price: {am.price}**',
-#                 url = am.url
-#             )
-
-
-# if __name__ == "__main__":
-#     cli()
-
-# session = HTMLSession()
-# for url in URLS:
-#     sleep(2)
-#     r = session.get(url)
-#     if r.status_code != 200:
-#         print(r.status_code)
-#     amazon = AmazonPrice(r.html)
-#     pprint(amazon.product_info_dict())
-#     add_price(db, amazon)
-#     # tracker = Tracker(**amazon)
-
-
-
